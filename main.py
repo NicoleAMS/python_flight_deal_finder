@@ -11,13 +11,6 @@ load_dotenv()
 data_manager = DataManager(os.getenv('SHEETY_ENDPOINT'), os.getenv('SHEETY_BEARER_TOKEN'))
 sheet_data = data_manager.get_sheet_data()
 
-# To test writing data to Google Sheets, update iataCode column with test data:
-for entry in sheet_data:
-    if entry['iataCode'] == '':
-        flight_search = FlightSearch(os.getenv('TEQUILA_LOCATIONS_ENDPOINT'), os.getenv('TEQUILA_API_KEY'))
-        entry['iataCode'] = flight_search.get_iata_code()
-        data_manager.update_sheet_data(entry['id'], entry)
-
 # TEST DATA
 # sheet_data = [
 #   {'city': 'Paris', 'iataCode': '', 'lowestPrice': 54, 'id': 2},
@@ -30,3 +23,11 @@ for entry in sheet_data:
 #   {'city': 'San Francisco', 'iataCode': '', 'lowestPrice': 260, 'id': 9},
 #   {'city': 'Cape Town', 'iataCode': '', 'lowestPrice': 378, 'id': 10}
 # ]
+
+# To test writing data to Google Sheets, update iataCode column with test data:
+for entry in sheet_data:
+    if entry['iataCode'] == '':
+        flight_search = FlightSearch(os.getenv('TEQUILA_LOCATIONS_ENDPOINT'), os.getenv('TEQUILA_API_KEY'))
+        entry['iataCode'] = flight_search.get_iata_code({"term": f"{entry['city']}"})
+        data_manager.update_sheet_data(entry['id'], entry)
+
