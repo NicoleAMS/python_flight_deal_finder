@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from datetime import datetime, timedelta
 from data_manager import DataManager
 from flight_search import FlightSearch
+from notification_manager import NotificationManager
 
 # Get data from Google Sheets using the Sheety API
 load_dotenv()
@@ -26,6 +27,11 @@ sheet_data = data_manager.get_sheet_data()
 # ]
 
 flight_search = FlightSearch(os.getenv('TEQUILA_ENDPOINT'), os.getenv('TEQUILA_API_KEY'))
+notification_manager = NotificationManager(
+    from_email=os.getenv('FROM_EMAIL'),
+    password=os.getenv('EMAIL_PASSWORD'),
+    smtp=os.getenv('SMTP')
+)
 
 for entry in sheet_data:
     # Add missing IATA codes for destinations
@@ -39,3 +45,14 @@ for entry in sheet_data:
         date_from=datetime.now(),
         date_to=datetime.now() + timedelta(weeks=26)
     )
+
+    if flight and flight.price <= entry['lowestPrice']:
+        email_msg = f"Subject: Low price alert! \n\n" \
+                  f"Low price alert! " \
+                  f"Only {flight.price} pounds to fly from " \
+                  f"{flight.departure_city}-{flight.departure_airport_code} to " \
+                  f"{flight.destination}-{flight.destination_airport_code}, from " \
+                  f"{flight.outbound_date} to {flight.return_date}."
+
+        notification_manager.send_email(message=email_msg, to_email=os.getenv('TO_EMAIL'))
+
