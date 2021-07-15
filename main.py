@@ -19,15 +19,17 @@ users = data_manager.get_users()
 
 # TEST DATA
 # flight_data = [
-#   {'city': 'Paris', 'iataCode': 'PAR', 'lowestPrice': 54, 'id': 2},
-#   {'city': 'Berlin', 'iataCode': 'BER', 'lowestPrice': 42, 'id': 3},
-#   {'city': 'Tokyo', 'iataCode': 'TYO', 'lowestPrice': 485, 'id': 4},
-#   {'city': 'Sydney', 'iataCode': 'SYD', 'lowestPrice': 551, 'id': 5},
-#   {'city': 'Istanbul', 'iataCode': 'IST', 'lowestPrice': 95, 'id': 6},
-#   {'city': 'Kuala Lumpur', 'iataCode': 'KUL', 'lowestPrice': 414, 'id': 7},
-#   {'city': 'New York', 'iataCode': 'NYC', 'lowestPrice': 240, 'id': 8},
-#   {'city': 'San Francisco', 'iataCode': 'SFO', 'lowestPrice': 260, 'id': 9},
-#   {'city': 'Cape Town', 'iataCode': 'CPT', 'lowestPrice': 378, 'id': 10}
+#     {'city': 'Paris', 'iataCode': 'PAR', 'lowestPrice': 85, 'id': 2},
+#     {'city': 'Berlin', 'iataCode': 'BER', 'lowestPrice': 70, 'id': 3},
+#     {'city': 'Tokyo', 'iataCode': 'TYO', 'lowestPrice': 520, 'id': 4},
+#     {'city': 'Sydney', 'iataCode': 'SYD', 'lowestPrice': 1050, 'id': 5},
+#     {'city': 'Istanbul', 'iataCode': 'IST', 'lowestPrice': 110, 'id': 6},
+#     {'city': 'Kuala Lumpur', 'iataCode': 'KUL', 'lowestPrice': 520, 'id': 7},
+#     {'city': 'New York', 'iataCode': 'NYC', 'lowestPrice': 500, 'id': 8},
+#     {'city': 'San Francisco', 'iataCode': 'SFO', 'lowestPrice': 600, 'id': 9},
+#     {'city': 'Cape Town', 'iataCode': 'CPT', 'lowestPrice': 450, 'id': 10},
+#     {'city': 'Bali', 'iataCode': 'DPS', 'lowestPrice': 700, 'id': 11},
+#     {'city': 'Nairobi', 'iataCode': 'NBO', 'lowestPrice': 430, 'id': 12}
 # ]
 # users = [
 #     {'firstName': 'Jane', 'lastName': 'Doe', 'email': 'example@test.com', 'id': 2},
@@ -51,7 +53,8 @@ for entry in flight_data:
     flight = flight_search.search_flights(
         destination=entry['iataCode'],
         date_from=datetime.now(),
-        date_to=datetime.now() + timedelta(weeks=26)
+        date_to=datetime.now() + timedelta(weeks=26),
+        max_stops=0
     )
 
     # Email every user for each flight that has a price <= lowest price
@@ -62,11 +65,20 @@ for entry in flight_data:
 
         email_msg = f"Subject: Low price alert! \n\n" \
                     f"Low price alert! " \
-                    f"Only {flight.price} pounds to fly from " \
+                    f"Only {flight.price} Euro to fly from " \
                     f"{flight.departure_city}-{flight.departure_airport_code} to " \
                     f"{flight.destination}-{flight.destination_airport_code}, from " \
-                    f"{flight.outbound_date} to {flight.return_date}. \n\n" \
-                    f"{google_flight_link}"
+                    f"{flight.outbound_date} to {flight.return_date}. \n"
 
+        if flight.stop_overs == 0:
+            email_msg += "Direct flight. \n"
+        elif flight.stop_overs == 1 or flight.via_cities[0] == flight.via_cities[1]:
+            email_msg += f"Flight with 1 stop over, via {flight.via_cities[0]}. \n"
+        else:
+            email_msg += f"Flight with 1 stop over, outbound flight via {flight.via_cities[0]} " \
+                         f"and return flight via {flight.via_cities[1]}. \n"
+
+        email_msg += f"{google_flight_link}"
+        print(email_msg)
         for user in users:
             notification_manager.send_email(message=email_msg, to_email=user['email'])
